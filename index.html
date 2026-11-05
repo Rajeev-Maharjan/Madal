@@ -1,61 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Key Tunes</title>
-  <style>
-    :root {
-      --bg: #1b1d22;
-      --key: #2a2d35;
-      --key-edge: #14161a;
-      --text: #e8e6e1;
-      --muted: #8b8f98;
-      --hit: #f2b84b;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background: var(--bg);
-      color: var(--text);
-      font-family: system-ui, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 28px;
-      padding: 24px;
-    }
-    h1 { margin: 0; font-size: 1.4rem; font-weight: 600; }
-    p { margin: 0; color: var(--muted); font-size: .95rem; text-align: center; }
-    .board {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
-      gap: 12px;
-      width: min(760px, 100%);
-    }
-    .key {
-      aspect-ratio: 1;
-      border: 0;
-      border-radius: 12px;
-      background: var(--key);
-      color: var(--text);
-      font-size: 1.8rem;
-      font-weight: 600;
-      box-shadow: 0 5px 0 var(--key-edge);
-      cursor: pointer;
-      transition: transform .06s, box-shadow .06s, background .06s;
-    }
-    .key:focus-visible { outline: 2px solid var(--hit); outline-offset: 3px; }
-    .key.active {
-      transform: translateY(4px);
-      box-shadow: 0 1px 0 var(--key-edge);
-      background: var(--hit);
-      color: #1b1d22;
-    }
-    .key.missing { opacity: .35; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Key Tunes</title>
+<style>
+  :root {
+    --bg: #1b1d22;
+    --key: #2a2d35;
+    --key-edge: #14161a;
+    --text: #e8e6e1;
+    --muted: #8b8f98;
+    --hit: #f2b84b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+    padding: 24px;
+  }
+  h1 { margin: 0; font-size: 1.4rem; font-weight: 600; }
+  p { margin: 0; color: var(--muted); font-size: .95rem; text-align: center; }
+  .board {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+    gap: 12px;
+    width: min(760px, 100%);
+  }
+  .key {
+    aspect-ratio: 1;
+    border: 0;
+    border-radius: 12px;
+    background: var(--key);
+    color: var(--text);
+    font-size: 1.8rem;
+    font-weight: 600;
+    box-shadow: 0 5px 0 var(--key-edge);
+    cursor: pointer;
+    transition: transform .06s, box-shadow .06s, background .06s;
+  }
+  .key:focus-visible { outline: 2px solid var(--hit); outline-offset: 3px; }
+  .key.active {
+    transform: translateY(4px);
+    box-shadow: 0 1px 0 var(--key-edge);
+    background: var(--hit);
+    color: #1b1d22;
+  }
+  .key.missing { opacity: .35; }
+</style>
 </head>
 <body>
   <h1>Key Tunes</h1>
@@ -63,113 +63,56 @@
   <div class="board" id="board"></div>
   <p id="status"></p>
 
-  <script>
-    const KEYS = [";", "a", "d", "e", "f", "g", "h", "i", "j", "k", "l", "o", "p", "s", "t", "u", "w", "y"];
-    const FILE_FOR = { ";": ";.wav" };
-    const NOTES = {
-      ";": 261.63,
-      a: 293.66,
-      d: 349.23,
-      e: 392.00,
-      f: 440.00,
-      g: 493.88,
-      h: 523.25,
-      i: 587.33,
-      j: 659.25,
-      k: 698.46,
-      l: 783.99,
-      o: 880.00,
-      p: 987.77,
-      s: 329.63,
-      t: 698.46,
-      u: 523.25,
-      w: 392.00,
-      y: 587.33
-    };
+<script>
+  // Keys that have a matching .wav file in the same folder as this index.html
+  const KEYS = [";", "a", "d", "e", "f", "g", "h", "i", "j", "k", "l", "o", "p", "s", "t", "u", "w", "y"];
 
-    const board = document.getElementById("board");
-    const status = document.getElementById("status");
-    const audio = {};
-    const buttons = {};
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  // ";" can't be used safely as a filename on every system.
+  // If your file is literally named ";.wav", leave this as is.
+  const FILE_FOR = { ";": ";.wav" };
+  const fileName = k => FILE_FOR[k] || (k + ".wav");
 
-    const fileName = k => FILE_FOR[k] || (k + ".wav");
+  const board = document.getElementById("board");
+  const status = document.getElementById("status");
+  const audio = {};
+  const buttons = {};
 
-    function playSynth(key) {
-      const oscillator = ctx.createOscillator();
-      const gain = ctx.createGain();
-      const now = ctx.currentTime;
-      const freq = NOTES[key] || 440;
+  KEYS.forEach(k => {
+    const a = new Audio(encodeURI(fileName(k)));
+    a.preload = "auto";
+    a.addEventListener("error", () => buttons[k].classList.add("missing"));
+    audio[k] = a;
 
-      oscillator.type = "triangle";
-      oscillator.frequency.setValueAtTime(freq, now);
-      gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.exponentialRampToValueAtTime(0.14, now + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
+    const b = document.createElement("button");
+    b.className = "key";
+    b.textContent = k;
+    b.addEventListener("mousedown", () => play(k));
+    b.addEventListener("keydown", e => { if (e.key === " " || e.key === "Enter") e.preventDefault(); });
+    board.appendChild(b);
+    buttons[k] = b;
+  });
 
-      oscillator.connect(gain);
-      gain.connect(ctx.destination);
-      oscillator.start(now);
-      oscillator.stop(now + 0.3);
-    }
-
-    function playFromFile(key) {
-      const a = audio[key];
-      if (!a) return;
-      const n = a.cloneNode();
-      n.play().catch(() => {
-        status.textContent = "Could not play " + fileName(key) + ". Falling back to synthesized sound.";
-        playSynth(key);
-      });
-      return n;
-    }
-
-    function play(key) {
-      const btn = buttons[key];
-      if (btn) {
-        btn.classList.add("active");
-        setTimeout(() => btn.classList.remove("active"), 120);
-      }
-
-      const file = audio[key];
-      if (file && file.canPlayType("audio/wav") !== "") {
-        const n = playFromFile(key);
-        if (n) {
-          status.textContent = "Playing " + key;
-          return;
-        }
-      }
-
-      status.textContent = "Using synthesized sound for " + key;
-      playSynth(key);
-    }
-
-    KEYS.forEach(k => {
-      const a = new Audio(encodeURI(fileName(k)));
-      a.preload = "auto";
-      a.addEventListener("error", () => {
-        if (buttons[k]) buttons[k].classList.add("missing");
-      });
-      a.addEventListener("canplay", () => status.textContent = "Ready");
-      audio[k] = a;
-
-      const b = document.createElement("button");
-      b.className = "key";
-      b.textContent = k;
-      b.addEventListener("mousedown", () => play(k));
-      b.addEventListener("keydown", e => { if (e.key === " " || e.key === "Enter") e.preventDefault(); });
-      board.appendChild(b);
-      buttons[k] = b;
+  function play(k) {
+    const a = audio[k];
+    if (!a) return;
+    // Clone so quick repeated presses overlap instead of cutting off
+    const n = a.cloneNode();
+    n.play().catch(() => {
+      status.textContent = "Could not play " + fileName(k) + ". Check the file is in the same folder.";
     });
+    const btn = buttons[k];
+    btn.classList.add("active");
+    setTimeout(() => btn.classList.remove("active"), 120);
+  }
 
-    document.addEventListener("keydown", e => {
-      if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
-      const k = e.key.toLowerCase();
-      if (audio[k] || NOTES[k]) {
-        e.preventDefault();
-        play(k);
-      }
-    });
-  </script>
+  document.addEventListener("keydown", e => {
+    if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+    const k = e.key.toLowerCase();
+    if (audio[k]) {
+      e.preventDefault();
+      play(k);
+    }
+  });
+</script>
 </body>
 </html>
